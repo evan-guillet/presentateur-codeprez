@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+renderer/node_modules/
+
+# Builds
+dist/
+renderer/dist/
+
+# Temp files
+temp/
+*.log
+*.zip
+*.codeprez
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
