@@ -22,5 +22,8 @@
   "homepage": "https://github.com/evan-guillet/presentateur-codeprez#readme",
   "devDependencies": {
     "electron": "^36.5.0"
+  },
+  "dependencies": {
+    "unzipper": "^0.12.3"
   }
 }
