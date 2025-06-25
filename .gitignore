@@ -1,20 +1,6 @@
-# Node modules
-node_modules/
-renderer/node_modules/
-
-# Builds
-dist/
-renderer/dist/
-
-# Temp files
-temp/
-*.log
-*.zip
-*.codeprez
-
-# OS junk
+node_modules
+dist
+out
 .DS_Store
-Thumbs.db
-
-# VSCode
-.vscode/
+.eslintcache
+*.log*
