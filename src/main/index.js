@@ -1,15 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-function createWindow() {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+function createNewWindow() {
+  const newWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -17,22 +16,88 @@ function createWindow() {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    newWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    newWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  newWindow.once('ready-to-show', () => newWindow.show())
+
+  newWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+}
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
+function createAppMenu(mainWindow) {
+  const menuTemplate = [
+    {
+      label: 'Fichier',
+      submenu: [
+        {
+          label: 'Nouvelle fenêtre',
+          accelerator: 'Ctrl+N',
+          click: () => {
+            createNewWindow()
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Ouvrir le dossier',
+          accelerator: 'Ctrl+O',
+          click: async () => {
+            const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+              title: 'Sélectionnez un dossier',
+              properties: ['openDirectory']
+            })
+            if (!canceled && filePaths.length > 0) {
+              console.log('Dossier sélectionné :', filePaths[0])
+              // TODO: Traiter le dossier ici (par exemple via IPC)
+              mainWindow.webContents.send('dossier-selectionne', filePaths[0])
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Quitter',
+          role: 'quit'
+        }
+      ]
+    }
+  ]
+
+  const menu = Menu.buildFromTemplate(menuTemplate)
+  Menu.setApplicationMenu(menu)
+}
+
+function createWindow() {
+  const mainWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    autoHideMenuBar: false,
+    ...(process.platform === 'linux' ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
+
+  createAppMenu(mainWindow)
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  mainWindow.once('ready-to-show', () => mainWindow.show())
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 }
 
 // This method will be called when Electron has finished
